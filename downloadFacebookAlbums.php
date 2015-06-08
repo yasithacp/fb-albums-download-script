@@ -1,14 +1,29 @@
 <?php
 //Change this to your access key
-define('ACCESS_KEY', 'CAACEdEose0cBAOTVQAby8CEOxZAqqPgO1xycy0apF4nyp2G40CfKZCs9Iuy2UWxp54TYILYgRatQ1fodklpKKi9YYkpiCyTHs1XA6d6qwcZBLDgCkMu5p8C0fnpuUoUHXAvmO6ZBscAvvbqMEZC1a7AVXXFSgAYrUNZB5rAqQYI9xXVxZCRzQzjDWGJW5K8ZCaFjK8r7OFX9ZCX8aEmwZBp8IJCFxVURUAvZARZCoYjiRUBQtAZDZD');
+define('ACCESS_KEY', 'CAACEdEose0cBAPbrOnv9nLCi8xsOToTzZCbL0a0F7ZBu7a1OAZBx1Up9wOUbYL1rRCgqpGJxk33rxstAt5CZA70HZAikUuJMEQQZBfOX12RJZAb2BYGjOdYGYHPk7zNgybBQOq2ZBkqsvjv6lnMvDmq0YznWUtNwWeLDIYtDkxSbZBJ5ImbBNt4JrVHjqjVJ6VZAGcltIYklPxlVFnPI01UnBXNKmEP7abqp0OFm10EPzFtAZDZD');
 define('API_HOST', 'https://graph.facebook.com/');
 define('VERSION', 'v2.3');
 define('FOLDER_PATH', '/Users/yasitha/facebook_albums/');
 
 //Begin the downloading script
+echo "Gathering album's information...\n";
+$stock = array();
 $albums = get('me?fields=albums{id,name}&');
+foreach ($albums->albums->data as $album) {
+  array_push($stock, $album);
+}
 
-echo sizeof($albums->albums->data)." albums found...\n";
+$nextUrl = $albums->albums->paging->next;
+
+while(isset($nextUrl)){
+  $albums = getNext($nextUrl);
+  foreach ($albums->data as $album) {
+    array_push($stock, $album);
+  }
+  $nextUrl = isset($albums->paging->next) ? $albums->paging->next : null;
+}
+
+echo sizeof($stock)." albums found...\n";die;
 
 foreach ($albums->albums->data as $album) {
   echo "Downloading photos of " . $album->name . " album...\n";
@@ -28,7 +43,20 @@ echo "Download completed...";
 
 function get($path) {
   $url = API_HOST.VERSION.'/'.$path.'access_token='.ACCESS_KEY;
-  print_r($url);
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $url);
+  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 300);
+  $res = curl_exec($ch);
+  $error_message = curl_error($ch);
+  $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+  return format_result(json_decode($res), $code, $error_message);
+}
+
+function getNext($url) {
+  $url = $url;
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
   curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
