@@ -1,6 +1,6 @@
 <?php
 //Change this to your access key
-define('ACCESS_KEY', 'CAACEdEose0cBAPbrOnv9nLCi8xsOToTzZCbL0a0F7ZBu7a1OAZBx1Up9wOUbYL1rRCgqpGJxk33rxstAt5CZA70HZAikUuJMEQQZBfOX12RJZAb2BYGjOdYGYHPk7zNgybBQOq2ZBkqsvjv6lnMvDmq0YznWUtNwWeLDIYtDkxSbZBJ5ImbBNt4JrVHjqjVJ6VZAGcltIYklPxlVFnPI01UnBXNKmEP7abqp0OFm10EPzFtAZDZD');
+define('ACCESS_KEY', 'CAACEdEose0cBAFHsE7L8lXX8gYnZCeYfLrcLYILu0QlRuFIymDyFZAxoCOZBYyZBZAA91qtHxg3C5Joj7FfU6xcPBb8BDnHTtZABAH3mZC4rpzp6KSDCJgSbUyUo37icFBTCcpUYMt9dKcoZBZA5lpF5CVMSPNyjJNQAn9ngHGhRE0gZBZAUZCYT0v5RPClviw8WIMZAQ88mC7vFu9sh3J4tUTZC1ICZCKCwZCwpFw1omftuoTZBPYwZDZD');
 define('API_HOST', 'https://graph.facebook.com/');
 define('VERSION', 'v2.3');
 define('FOLDER_PATH', '/Users/yasitha/facebook_albums/');
@@ -9,37 +9,62 @@ define('FOLDER_PATH', '/Users/yasitha/facebook_albums/');
 echo "Gathering album's information...\n";
 $stock = array();
 $albums = get('me?fields=albums{id,name}&');
+
 foreach ($albums->albums->data as $album) {
   array_push($stock, $album);
 }
 
-$nextUrl = $albums->albums->paging->next;
+if(isset($albums->albums->paging->next)){
+  $nextUrl = $albums->albums->paging->next;
 
-while(isset($nextUrl)){
-  $albums = getNext($nextUrl);
-  foreach ($albums->data as $album) {
-    array_push($stock, $album);
+  while(isset($nextUrl)){
+    $albums = getNext($nextUrl);
+    foreach ($albums->data as $album) {
+      array_push($stock, $album);
+    }
+    $nextUrl = isset($albums->paging->next) ? $albums->paging->next : null;
   }
-  $nextUrl = isset($albums->paging->next) ? $albums->paging->next : null;
 }
 
-echo sizeof($stock)." albums found...\n";die;
+echo sizeof($stock)." albums found...\n";
 
-foreach ($albums->albums->data as $album) {
+foreach ($stock as $album) {
   echo "Downloading photos of " . $album->name . " album...\n";
   $photos = get($album->id.'?fields=photos{source}&');
-  echo sizeof($photos->photos->data)." photos found...\n";
+  $picsList = array();
+
+  foreach ($photos->photos->data as $photo) {
+    array_push($picsList, $photo);
+  }
+
+  if(isset($photos->photos->paging->next)){
+    $nextUrl = $photos->photos->paging->next;
+
+    while(isset($nextUrl)){
+      $photos = getNext($nextUrl);
+      foreach ($photos->data as $photo) {
+        array_push($picsList, $photo);
+      }
+      $nextUrl = isset($photos->paging->next) ? $photos->paging->next : null;
+    }
+  }
+
+  echo sizeof($picsList)." photos found...\n";
+  echo "Creating album directory...\n";
+
   if (!file_exists(FOLDER_PATH . $album->name)) {
     mkdir(FOLDER_PATH . $album->name, 0777, true);
   }
   $i = 1;
-  foreach ($photos->photos->data as $photo) {
-    //file_put_contents(FOLDER_PATH.$album->name.'/image_'.$i.'.jpg' , file_get_contents($photo->source));
+  foreach ($picsList as $pic) {
+    file_put_contents(FOLDER_PATH.$album->name.'/image_'.$i.'.jpg' , file_get_contents($pic->source));
+    progressBar($i, sizeof($picsList));
     $i++;
   }
+  echo "\n";
 }
 
-echo "Download completed...";
+echo "Download completed..." . $i ;
 
 function get($path) {
   $url = API_HOST.VERSION.'/'.$path.'access_token='.ACCESS_KEY;
@@ -52,7 +77,7 @@ function get($path) {
   $error_message = curl_error($ch);
   $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
   curl_close($ch);
-  return format_result(json_decode($res), $code, $error_message);
+  return format_result(json_decode($res));
 }
 
 function getNext($url) {
@@ -66,39 +91,22 @@ function getNext($url) {
   $error_message = curl_error($ch);
   $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
   curl_close($ch);
-  return format_result(json_decode($res), $code, $error_message);
+  return format_result(json_decode($res));
 }
 
-function format_result($obj, $http_code, $error_message=NULL) {
-  if (empty($obj)) { $obj = new \stdClass(); }
-  if(is_array($obj)) {
-    $temp = $obj;
-    $obj = new \stdClass();
-    $obj->result_set = $temp;
+function format_result($response) {
+  if(isset($response->error)){
+    echo "Error occurred: " . $response->error->message . "\n";
+    echo "Terminating...\n";
+    exit();
   }
-  if (isset($obj->error)) {
-    $obj->success = false;
-    if (is_a($obj->error, "stdClass")) {
-      $e = Array();
-      foreach ($obj->error as $key => $values) {
-        foreach ($values as $value) {
-          array_push($e, $key . ': ' . $value);
-        }
-      }
-      $obj->error = $e;
-    }
-    else {
-      $obj->error = Array('Error: ' . $obj->error);
-    }
-  }
-  else if (!in_array($http_code, array(200, 201, 204))) {
-    $obj->success = false;
-    $obj->error = array($error_message);
-  }
-  else {
-    $obj->success = true;
-  }
-  $obj->api_http_code = $http_code;
-  return $obj;
+  return $response;
+}
+
+function progressBar($done, $total){
+    $perc = ceil(($done / $total) * 100);
+    $bar = "[" . ($perc > 0 ? str_repeat("=", $perc - 1) : "") . ">";
+    $bar .= str_repeat(" ", 100 - $perc) . "] - $perc% - $done/$total";
+    echo "\033[0G$bar";
 }
 ?>
