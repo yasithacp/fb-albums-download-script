@@ -1,9 +1,9 @@
 <?php
 //Change this to your access key
-define('ACCESS_KEY', 'CAACEdEose0cBAGsV2NBZChioQO4FVjBfToW3KTaS2Or5YyUCAOZBZBGO6sD2UZBv2xfC8NJMkcjKqqABuWoqLtcn2gL4yZB4UZC80MdpTgR3IidpcZBEKZBuYk8xIvHP5TmtxjCPXkS7iWZAZCgcZACGegm0DL0Jgm1nhO1pKCDaieCjH6GrChYzixpFhMvr4xCrZACwZALGwd3fvOMANHLoorCZBYtnq94Pipd1BeIFyp3r5aBwZDZD');
+define('ACCESS_KEY', 'CAACEdEose0cBAO6fZBJSUz7ZBKELOnU5gAphiCDmDUCBU6t6IhDdGMGTuSua9dZASaQbG3USSq5ZAxsjYoRAZC6NIFUUvLB01t5mddEp7ouimzsUrvMKiSCSfM7FNWDBnYJfc46clpspIGKIPFTx6CjTI6E3eHUOqwgmUmfIaVjN6BZBZAYxzxqdbeVo72JwMzeSfTeKLfF29ZA1Jc88Kjmxt4vhuMZCxHg0ZD');
 define('API_HOST', 'https://graph.facebook.com/');
 define('VERSION', 'v2.3');
-define('FOLDER_PATH', '/Users/yasitha/facebook_albums2/');
+define('FOLDER_PATH', '/Users/yasitha/facebook_albums_5mp/');
 
 //Begin the downloading script
 echo "Gathering album's information...\n";
@@ -69,7 +69,7 @@ foreach ($stock as $album) {
   }
 }
 
-echo "Download completed..." . $i ;
+echo "Download completed...\n";
 
 function get($path) {
   $url = API_HOST.VERSION.'/'.$path.'access_token='.ACCESS_KEY;
