@@ -1,9 +1,9 @@
 <?php
 //Change this to your access key
-define('ACCESS_KEY', 'CAACEdEose0cBAO6fZBJSUz7ZBKELOnU5gAphiCDmDUCBU6t6IhDdGMGTuSua9dZASaQbG3USSq5ZAxsjYoRAZC6NIFUUvLB01t5mddEp7ouimzsUrvMKiSCSfM7FNWDBnYJfc46clpspIGKIPFTx6CjTI6E3eHUOqwgmUmfIaVjN6BZBZAYxzxqdbeVo72JwMzeSfTeKLfF29ZA1Jc88Kjmxt4vhuMZCxHg0ZD');
+define('ACCESS_KEY', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
 define('API_HOST', 'https://graph.facebook.com/');
 define('VERSION', 'v2.3');
-define('FOLDER_PATH', '/Users/yasitha/facebook_albums_5mp/');
+define('FOLDER_PATH', '/Users/yasitha/facebook_albums/');
 
 //Begin the downloading script
 echo "Gathering album's information...\n";
