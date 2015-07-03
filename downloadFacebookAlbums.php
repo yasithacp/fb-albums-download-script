@@ -1,9 +1,9 @@
 <?php
 //Change this to your access key
-define('ACCESS_KEY', 'CAACEdEose0cBAFHsE7L8lXX8gYnZCeYfLrcLYILu0QlRuFIymDyFZAxoCOZBYyZBZAA91qtHxg3C5Joj7FfU6xcPBb8BDnHTtZABAH3mZC4rpzp6KSDCJgSbUyUo37icFBTCcpUYMt9dKcoZBZA5lpF5CVMSPNyjJNQAn9ngHGhRE0gZBZAUZCYT0v5RPClviw8WIMZAQ88mC7vFu9sh3J4tUTZC1ICZCKCwZCwpFw1omftuoTZBPYwZDZD');
+define('ACCESS_KEY', 'CAACEdEose0cBAGsV2NBZChioQO4FVjBfToW3KTaS2Or5YyUCAOZBZBGO6sD2UZBv2xfC8NJMkcjKqqABuWoqLtcn2gL4yZB4UZC80MdpTgR3IidpcZBEKZBuYk8xIvHP5TmtxjCPXkS7iWZAZCgcZACGegm0DL0Jgm1nhO1pKCDaieCjH6GrChYzixpFhMvr4xCrZACwZALGwd3fvOMANHLoorCZBYtnq94Pipd1BeIFyp3r5aBwZDZD');
 define('API_HOST', 'https://graph.facebook.com/');
 define('VERSION', 'v2.3');
-define('FOLDER_PATH', '/Users/yasitha/facebook_albums/');
+define('FOLDER_PATH', '/Users/yasitha/facebook_albums2/');
 
 //Begin the downloading script
 echo "Gathering album's information...\n";
@@ -29,39 +29,44 @@ if(isset($albums->albums->paging->next)){
 echo sizeof($stock)." albums found...\n";
 
 foreach ($stock as $album) {
-  echo "Downloading photos of " . $album->name . " album...\n";
-  $photos = get($album->id.'?fields=photos{source}&');
-  $picsList = array();
-
-  foreach ($photos->photos->data as $photo) {
-    array_push($picsList, $photo);
-  }
-
-  if(isset($photos->photos->paging->next)){
-    $nextUrl = $photos->photos->paging->next;
-
-    while(isset($nextUrl)){
-      $photos = getNext($nextUrl);
-      foreach ($photos->data as $photo) {
-        array_push($picsList, $photo);
-      }
-      $nextUrl = isset($photos->paging->next) ? $photos->paging->next : null;
-    }
-  }
-
-  echo sizeof($picsList)." photos found...\n";
-  echo "Creating album directory...\n";
-
   if (!file_exists(FOLDER_PATH . $album->name)) {
+    echo "Downloading photos of " . $album->name . " album...\n";
+    $photos = get($album->id.'?fields=photos{source}&');
+    $picsList = array();
+
+    foreach ($photos->photos->data as $photo) {
+      array_push($picsList, $photo);
+    }
+
+    if(isset($photos->photos->paging->next)){
+      $nextUrl = $photos->photos->paging->next;
+
+      while(isset($nextUrl)){
+        $photos = getNext($nextUrl);
+        foreach ($photos->data as $photo) {
+          array_push($picsList, $photo);
+        }
+        $nextUrl = isset($photos->paging->next) ? $photos->paging->next : null;
+      }
+    }
+
+    echo sizeof($picsList)." photos found...\n";
+    echo "Creating album directory...\n";
+
+
     mkdir(FOLDER_PATH . $album->name, 0777, true);
+
+    $i = 1;
+    foreach ($picsList as $pic) {
+      file_put_contents(FOLDER_PATH.$album->name.'/image_'.$i.'.jpg' , file_get_contents($pic->source));
+      progressBar($i, sizeof($picsList));
+      $i++;
+    }
+    echo "\n";
+  } else {
+    echo $album->name . " is already downloaded..\n";
+    echo "Skipping...\n";
   }
-  $i = 1;
-  foreach ($picsList as $pic) {
-    file_put_contents(FOLDER_PATH.$album->name.'/image_'.$i.'.jpg' , file_get_contents($pic->source));
-    progressBar($i, sizeof($picsList));
-    $i++;
-  }
-  echo "\n";
 }
 
 echo "Download completed..." . $i ;
@@ -104,9 +109,9 @@ function format_result($response) {
 }
 
 function progressBar($done, $total){
-    $perc = ceil(($done / $total) * 100);
-    $bar = "[" . ($perc > 0 ? str_repeat("=", $perc - 1) : "") . ">";
-    $bar .= str_repeat(" ", 100 - $perc) . "] - $perc% - $done/$total";
-    echo "\033[0G$bar";
+  $perc = ceil(($done / $total) * 100);
+  $bar = "[" . ($perc > 0 ? str_repeat("=", $perc - 1) : "") . ">";
+  $bar .= str_repeat(" ", 100 - $perc) . "] - $perc% - $done/$total";
+  echo "\033[0G$bar";
 }
 ?>
